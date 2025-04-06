@@ -1,76 +1,54 @@
-   "source": [
-    "import streamlit as st\n",
-    "import pandas as pd\n",
-    "import numpy as np\n",
-    "import pickle\n",
-    "\n",
-    "# Load trained model and scaler\n",
-    "model = pickle.load(open('rf_model.pkl', 'rb'))\n",
-    "#scaler = pickle.load(open('scaler.pkl', 'rb'))  # if used\n",
-    "\n",
-    "st.title(\"Churn Prediction App\")\n",
-    "\n",
-    "# UI inputs (match these to your dataset features)\n",
-    "age = st.slider(\"Age\", 18, 100, 30)\n",
-    "gender = st.selectbox(\"Gender\", ['Male', 'Female'])\n",
-    "tenure = st.slider(\"Tenure\", 0, 72, 12)\n",
-    "usage_freq = st.slider(\"Usage Frequency\", 0, 100, 20)\n",
-    "support_calls = st.slider(\"Support Calls\", 0, 30, 2)\n",
-    "payment_delay = st.slider(\"Payment Delay (days)\", 0, 60, 5)\n",
-    "subscription_type = st.selectbox(\"Subscription Type\", ['Basic', 'Standard', 'Premium'])\n",
-    "contract_length = st.selectbox(\"Contract Length\", ['Monthly', 'Quarterly', 'Annual'])\n",
-    "total_spend = st.number_input(\"Total Spend\", min_value=0.0, step=10.0)\n",
-    "last_interaction = st.slider(\"Last Interaction (days ago)\", 0, 365, 30)\n",
-    "\n",
-    "# Encode values like you did in training\n",
-    "gender = 1 if gender == 'Male' else 0\n",
-    "subscription_map = {'Basic': 0, 'Standard': 1, 'Premium': 2}\n",
-    "subscription_type = subscription_map[subscription_type]\n",
-    "contract_length_map = {'Monthly': 0, 'Quarterly': 1, 'Annual': 2}\n",
-    "contract_length = contract_length_map[contract_length]\n",
-    "\n",
-    "# Create a DataFrame for prediction\n",
-    "input_df = pd.DataFrame([[age, gender, tenure, usage_freq, support_calls, payment_delay,\n",
-    "                          subscription_type, contract_length, total_spend, last_interaction]],\n",
-    "                        columns=['Age', 'Gender', 'Tenure', 'Usage Frequency', 'Support Calls',\n",
-    "                                 'Payment Delay', 'Subscription Type', 'Contract Length',\n",
-    "                                 'Total Spend', 'Last Interaction'])\n",
-    "\n",
-    "# Scale if necessary\n",
-    "if scaler:\n",
-    "    input_df = scaler.transform(input_df)\n",
-    "\n",
-    "# Predict\n",
-    "pred = model.predict(input_df)[0]\n",
-    "prob = model.predict_proba(input_df)[0][1]\n",
-    "\n",
-    "st.subheader(\"Prediction Result:\")\n",
-    "if pred == 1:\n",
-    "    st.error(f\"⚠️ Customer likely to churn (probability: {prob:.2f})\")\n",
-    "else:\n",
-    "    st.success(f\"✅ Customer likely to stay (probability: {prob:.2f})\")\n"
-   ]
-  }
- ],
- "metadata": {
-  "kernelspec": {
-   "display_name": "Python [conda env:base] *",
-   "language": "python",
-   "name": "conda-base-py"
-  },
-  "language_info": {
-   "codemirror_mode": {
-    "name": "ipython",
-    "version": 3
-   },
-   "file_extension": ".py",
-   "mimetype": "text/x-python",
-   "name": "python",
-   "nbconvert_exporter": "python",
-   "pygments_lexer": "ipython3",
-   "version": "3.12.7"
-  }
- },
- "nbformat": 4,
- "nbformat_minor": 5
-}
+import streamlit as st
+import pandas as pd
+import numpy as np
+import pickle
+
+# Load trained model and scaler
+try:
+    model = pickle.load(open('rf_model.pkl', 'rb'))
+    # Uncomment if you used a scaler during training
+    scaler = pickle.load(open('scaler.pkl', 'rb'))  
+except FileNotFoundError:
+    st.error("Model or scaler file not found. Ensure the files are in the correct directory.")
+
+st.title("Churn Prediction App")
+
+# UI inputs (match these to your dataset features)
+age = st.slider("Age", 18, 100, 30)
+gender = st.selectbox("Gender", ['Male', 'Female'])
+tenure = st.slider("Tenure", 0, 72, 12)
+usage_freq = st.slider("Usage Frequency", 0, 100, 20)
+support_calls = st.slider("Support Calls", 0, 30, 2)
+payment_delay = st.slider("Payment Delay (days)", 0, 60, 5)
+subscription_type = st.selectbox("Subscription Type", ['Basic', 'Standard', 'Premium'])
+contract_length = st.selectbox("Contract Length", ['Monthly', 'Quarterly', 'Annual'])
+total_spend = st.number_input("Total Spend", min_value=0.0, step=10.0)
+last_interaction = st.slider("Last Interaction (days ago)", 0, 365, 30)
+
+# Encode values like you did in training
+gender = 1 if gender == 'Male' else 0
+subscription_map = {'Basic': 0, 'Standard': 1, 'Premium': 2}
+subscription_type = subscription_map[subscription_type]
+contract_length_map = {'Monthly': 0, 'Quarterly': 1, 'Annual': 2}
+contract_length = contract_length_map[contract_length]
+
+# Create a DataFrame for prediction
+input_df = pd.DataFrame([[age, gender, tenure, usage_freq, support_calls, payment_delay,
+                          subscription_type, contract_length, total_spend, last_interaction]],
+                        columns=['Age', 'Gender', 'Tenure', 'Usage Frequency', 'Support Calls',
+                                 'Payment Delay', 'Subscription Type', 'Contract Length',
+                                 'Total Spend', 'Last Interaction'])
+
+# Scale if necessary
+if 'scaler' in locals():  # Only scale if the scaler was loaded
+    input_df = scaler.transform(input_df)
+
+# Predict
+pred = model.predict(input_df)[0]
+prob = model.predict_proba(input_df)[0][1]
+
+st.subheader("Prediction Result:")
+if pred == 1:
+    st.error(f"⚠️ Customer likely to churn (probability: {prob:.2f})")
+else:
+    st.success(f"✅ Customer likely to stay (probability: {prob:.2f})")
